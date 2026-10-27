@@ -44,6 +44,15 @@ jobs:
           test -f $F/System.Console.dll
           test -f $F/Microsoft.CodeAnalysis.CSharp.dll
           test -f publish/wwwroot/index.html
+          # Capacitor's Android asset merger treats precompressed Blazor files
+          # (.gz/.br) as duplicate assets beside the original files. A WebView
+          # can load the uncompressed files directly, so remove sidecar copies.
+          find publish/wwwroot -type f \( -name '*.gz' -o -name '*.br' \) -delete
+          if find publish/wwwroot -type f \( -name '*.gz' -o -name '*.br' \) | grep -q .; then
+            echo "::error::Compressed sidecar files remain in publish/wwwroot."
+            exit 1
+          fi
+          rm -rf www
           cp -r publish/wwwroot www
 
       - uses: actions/setup-node@v4
